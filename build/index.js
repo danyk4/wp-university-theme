@@ -13,18 +13,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modules/MobileMenu */ "./src/modules/MobileMenu.js");
 /* harmony import */ var _modules_HeroSlider__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/HeroSlider */ "./src/modules/HeroSlider.js");
 /* harmony import */ var _modules_Search__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/Search */ "./src/modules/Search.js");
+/* harmony import */ var _modules_MyNotes__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/MyNotes */ "./src/modules/MyNotes.js");
+/* harmony import */ var _modules_Like__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./modules/Like */ "./src/modules/Like.js");
 
 
 // Our modules / classes
 
 
 
-window.addEventListener('load', function () {
-  // Instantiate a new object using our modules/classes
-  const mobileMenu = new _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__["default"]();
-  const heroSlider = new _modules_HeroSlider__WEBPACK_IMPORTED_MODULE_2__["default"]();
-  const magicSearch = new _modules_Search__WEBPACK_IMPORTED_MODULE_3__["default"]();
-});
+
+
+
+// Instantiate a new object using our modules/classes
+const mobileMenu = new _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__["default"]();
+const heroSlider = new _modules_HeroSlider__WEBPACK_IMPORTED_MODULE_2__["default"]();
+const magicSearch = new _modules_Search__WEBPACK_IMPORTED_MODULE_3__["default"]();
+const myNotes = new _modules_MyNotes__WEBPACK_IMPORTED_MODULE_4__["default"]();
+const like = new _modules_Like__WEBPACK_IMPORTED_MODULE_5__["default"]();
 
 /***/ }),
 
@@ -69,6 +74,95 @@ class HeroSlider {
 
 /***/ }),
 
+/***/ "./src/modules/Like.js":
+/*!*****************************!*\
+  !*** ./src/modules/Like.js ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+class Like {
+  constructor() {
+    this.myLikes = document.querySelector('.like-box');
+    this.events();
+  }
+  events() {
+    if (this.myLikes) {
+      this.myLikes.addEventListener('click', e => this.clickDispatcher(e));
+    }
+  }
+
+  // methods
+  clickDispatcher(e) {
+    let currentLikeBox = e.target;
+    while (!currentLikeBox.classList.contains('like-box')) {
+      currentLikeBox = currentLikeBox.parentElement;
+    }
+    if (currentLikeBox.getAttribute('data-exists') == 'yes') {
+      this.deleteLike(currentLikeBox);
+    } else {
+      this.createLike(currentLikeBox);
+    }
+  }
+  async createLike(currentLikeBox) {
+    const response = await fetch(uniData.root_url + '/wp-json/uni/v1/manageLike', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': uniData.nonce
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        'professorId': currentLikeBox.getAttribute('data-professor')
+      })
+    }).then(response => response.json()).then(response => {
+      if (response.message !== 'Only logged in users can create a like.') {
+        currentLikeBox.setAttribute('data-exists', 'yes');
+        let likeCount = parseInt(currentLikeBox.querySelector('.like-count').innerHTML, 10);
+        likeCount++;
+        currentLikeBox.querySelector('.like-count').innerHTML = likeCount;
+        currentLikeBox.querySelector('i').classList.remove('fa-heart-o');
+        currentLikeBox.querySelector('i').classList.add('fa-heart');
+        currentLikeBox.setAttribute('data-like', response);
+        //console.log(response)
+      }
+    }).catch(error => {
+      console.log(error);
+    });
+  }
+  async deleteLike(currentLikeBox) {
+    const response = await fetch(uniData.root_url + '/wp-json/uni/v1/manageLike', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': uniData.nonce
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        'like': currentLikeBox.getAttribute('data-like')
+      })
+    }).then(response => response.json()).then(response => {
+      currentLikeBox.setAttribute('data-exists', 'no');
+      let likeCount = parseInt(currentLikeBox.querySelector('.like-count').innerHTML, 10);
+      likeCount--;
+      currentLikeBox.querySelector('.like-count').innerHTML = likeCount;
+      currentLikeBox.querySelector('i').classList.remove('fa-heart');
+      currentLikeBox.querySelector('i').classList.add('fa-heart-o');
+      currentLikeBox.setAttribute('data-like', '');
+      //console.log(response)
+    }).catch(error => {
+      console.log(error);
+    });
+    console.log('dislike');
+  }
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Like);
+
+/***/ }),
+
 /***/ "./src/modules/MobileMenu.js":
 /*!***********************************!*\
   !*** ./src/modules/MobileMenu.js ***!
@@ -95,6 +189,149 @@ class MobileMenu {
   }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (MobileMenu);
+
+/***/ }),
+
+/***/ "./src/modules/MyNotes.js":
+/*!********************************!*\
+  !*** ./src/modules/MyNotes.js ***!
+  \********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+class MyNotes {
+  constructor() {
+    if (document.querySelector('#my-notes')) {
+      this.myNotes = document.querySelector('#my-notes');
+      this.deleteBtns = this.myNotes.querySelectorAll('.delete-note');
+      this.editBtns = this.myNotes.querySelectorAll('.edit-note');
+      this.saveBtns = this.myNotes.querySelectorAll('.save-note');
+      this.addBtn = document.querySelector('.submit-note');
+      this.events();
+    }
+  }
+  events() {
+    this.myNotes.addEventListener('click', e => this.clickHandler(e));
+    this.addBtn.addEventListener('click', () => this.createNote());
+  }
+  clickHandler(e) {
+    if (e.target.classList.contains('delete-note') || e.target.classList.contains('fa-trash-o')) this.deleteNote(e);
+    if (e.target.classList.contains('edit-note') || e.target.classList.contains('fa-pencil') || e.target.classList.contains('fa-times')) this.editNote(e);
+    if (e.target.classList.contains('update-note') || e.target.classList.contains('fa-arrow-right')) this.saveNote(e);
+  }
+
+  // Methods
+  async deleteNote(e) {
+    const thisNote = e.target.closest('li');
+    await fetch(uniData.root_url + '/wp-json/wp/v2/note/' + thisNote.getAttribute('data-id'), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': uniData.nonce
+      },
+      credentials: 'same-origin',
+      body: null
+    }).then(response => response.json()).then(response => {
+      console.log(response.userNoteCount);
+      thisNote.className = 'hidden';
+      //document.querySelector('.note-limit').classList.add('update-note')
+      if (response.userNoteCount < 5) {
+        document.querySelector('.note-limit-message').classList.remove('active');
+      }
+    }).catch(error => {
+      console.log('error - ' + error);
+    });
+  }
+  async editNote(e) {
+    const thisNote = e.target.closest('li');
+    if (thisNote.getAttribute('state') == 'editable') {
+      this.makeNoteReadOnly(thisNote);
+    } else {
+      this.makeNoteEditable(thisNote);
+    }
+  }
+  makeNoteEditable(thisNote) {
+    thisNote.querySelector('.edit-note').innerHTML = `<i class="fa fa-times mr-1" aria-hidden="true"></i>Cancel`;
+    thisNote.querySelector('input').removeAttribute('readonly');
+    thisNote.querySelector('input').classList.add('note-active-field');
+    thisNote.querySelector('textarea').removeAttribute('readonly');
+    thisNote.querySelector('textarea').classList.add('note-active-field');
+    thisNote.querySelector('.update-note').classList.add('update-note--visible');
+    thisNote.setAttribute('state', 'editable');
+  }
+  makeNoteReadOnly(thisNote) {
+    thisNote.querySelector('.edit-note').innerHTML = `<i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit`;
+    thisNote.querySelector('input').setAttribute('readonly', 'readonly');
+    thisNote.querySelector('input').classList.remove('note-active-field');
+    thisNote.querySelector('textarea').setAttribute('readonly', 'readonly');
+    thisNote.querySelector('textarea').classList.remove('note-active-field');
+    thisNote.querySelector('.update-note').classList.remove('update-note--visible');
+    thisNote.removeAttribute('state', 'cancel');
+  }
+  async saveNote(e) {
+    const thisNote = e.target.closest('li');
+    const updatedPost = {
+      'title': thisNote.querySelector('input').value,
+      'content': thisNote.querySelector('textarea').value
+    };
+    await fetch(uniData.root_url + '/wp-json/wp/v2/note/' + thisNote.getAttribute('data-id'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': uniData.nonce
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify(updatedPost)
+    }).then(response => {
+      this.makeNoteReadOnly(thisNote);
+      return response.json();
+    }).catch(error => {
+      console.log('error - ' + error);
+    });
+  }
+  async createNote() {
+    const ourNewPost = {
+      'title': document.querySelector('.new-note-title').value,
+      'content': document.querySelector('.new-note-body').value,
+      'status': 'private'
+    };
+    await fetch(uniData.root_url + '/wp-json/wp/v2/note/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': uniData.nonce
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify(ourNewPost)
+    }).then(response => response.json()).then(response => {
+      if (response.message == 'You have reached your note limit.') {
+        document.querySelector('.note-limit-message').classList.add('active');
+      } else {
+        document.querySelector('.note-title-field').value = '';
+        document.querySelector('.note-body-field').value = '';
+        const li = document.createElement('li');
+        li.className = '';
+        li.setAttribute('data-id', response.id);
+        li.innerHTML = `
+        
+          <input readonly class="note-title-field" type="text" value="${response.title.raw}">
+          <span class="edit-note"><i class="fa fa-pencil" aria-hidden="true"></i>Edit</span>
+          <span class="delete-note"><i class="fa fa-trash-o" aria-hidden="true"></i>Delete</span>
+       
+          <textarea readonly class="note-body-field" name="" id="" cols="30" rows="10">${response.content.raw}</textarea>
+          <span class="update-note btn btn--blue btn--small"><i class="fa fa-arrow-right" aria-hidden="true"></i>Save</span>
+          `;
+        document.querySelector('#my-notes').prepend(li);
+      }
+    }).catch(error => {
+      console.error(error);
+    });
+  }
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (MyNotes);
 
 /***/ }),
 
@@ -128,7 +365,7 @@ class Search {
   events() {
     this.openButton.addEventListener('click', this.openOverlay.bind(this));
     this.closeButton.addEventListener('click', this.closeOverlay.bind(this));
-    document.addEventListener('keydown', this.keyPressDispatcher.bind(this));
+    //document.addEventListener('keydown', this.keyPressDispatcher.bind(this))
     this.searchField.addEventListener('keyup', this.typingLogic.bind(this));
   }
 
@@ -150,18 +387,80 @@ class Search {
     this.previousValue = this.searchField.value;
   }
   async getResults() {
-    const urls = [uniData.root_url + '/wp-json/wp/v2/posts?search=' + this.searchField.value, uniData.root_url + '/wp-json/wp/v2/pages?search=' + this.searchField.value];
-    await Promise.all(urls.map(url => fetch(url).then(res => res.json()))).then(res => {
-      let combinedResults = res[0].concat(res[1]);
+    await fetch(uniData.root_url + '/wp-json/uni/v1/search?term=' + this.searchField.value).then(response => response.json()).then(data => {
       this.resultsDiv.innerHTML = `
-              <h2 class="search-overlay__section-title">General information</h2>
-              ${combinedResults.length ? '<ul class="link-list min-list">' : '<p>No general info was found</p>'}
-                  ${combinedResults.map(item => `<li><a href="${item.link}">${item.title.rendered}</a> ${item.type == 'post' ? `by ${item.authorName}` : ''}`).join('')}
-              ${combinedResults.length ? '</ul>' : ''}
-            `;
+                <div class="row">
+                    <div class="one-third">
+                        <h2 class="search-overlay__section-title">General information</h2>
+                        ${data.generalInfo.length ? '<ul class="link-list min-list">' : '<p>No posts was found</p>'}
+                        ${data.generalInfo.map(item => `<li><a href="${item.permalink}">${item.title}</a> ${item.postType == 'post' ? `by ${item.authorName}` : ''}</li>`).join('')}
+                        ${data.generalInfo.length ? '</ul>' : ''}
+                    </div>
+                    <div class="one-third">
+                        <h2 class="search-overlay__section-title">Programs</h2>
+                        ${data.programs.length ? '<ul class="link-list min-list">' : '<p>No programs was found</p>'}
+                        ${data.programs.map(item => `<li><a href="${item.permalink}">${item.title}</a></li>`).join('')}
+                        ${data.programs.length ? '</ul>' : ''}
+                        
+                        <h2 class="search-overlay__section-title">Professors</h2>
+                        ${data.professors.length ? '<ul class="professor-cards">' : '<p>No professors was found</p>'}
+                        ${data.professors.map(item => `
+                            <li class="professor-card__list-item">
+                                <a class="professor-card" href="${item.permalink}">
+                                    <img class="professor-card__image"
+                                         src="${item.image}" alt="">
+                                    <span class="professor-card__name">${item.title}</span>
+                                </a>
+                            </li>
+                        `).join('')}
+                        ${data.professors.length ? '</ul>' : ''}
+                    </div>
+                    <div class="one-third">
+                        <h2 class="search-overlay__section-title">Campuses</h2>
+                        ${data.campuses.length ? '<ul class="link-list min-list">' : '<p>No campuses was found</p>'}
+                        ${data.campuses.map(item => `<li><a href="${item.permalink}">${item.title}</a></li>`).join('')}
+                        ${data.campuses.length ? '</ul>' : ''}
+                        
+                        <h2 class="search-overlay__section-title">Events</h2>
+                        ${data.events.length ? '' : '<p>No events was found</p>'}
+                        ${data.events.map(item => `
+                            <div class="event-summary">
+                              <a class="event-summary__date t-center" href="${item.permalink}">
+                                <span class="event-summary__month">${item.month}</span>
+                                <span class="event-summary__day">${item.day}</span>
+                              </a>
+                              <div class="event-summary__content">
+                                <h5 class="event-summary__title headline headline--tiny">
+                                  <a href="${item.permalink}">${item.title}</a></h5>
+                                <p>${item.description}<a href="${item.permalink}" class="nu gray">Learn more</a>
+                                </p>
+                              </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+              `;
     }).catch(() => {
       this.resultsDiv.innerHTML = '<p>Unexpected error, please try again</p>';
     });
+
+    /*const urls = [
+        uniData.root_url + '/wp-json/wp/v2/posts?search=' + this.searchField.value,
+        uniData.root_url + '/wp-json/wp/v2/pages?search=' + this.searchField.value
+    ];
+    await Promise.all(urls.map(url => fetch(url).then(res => res.json())))
+      .then((res) => {
+          let combinedResults = res[0].concat(res[1]);
+          this.resultsDiv.innerHTML = `
+          <h2 class="search-overlay__section-title">General information</h2>
+          ${combinedResults.length ? '<ul class="link-list min-list">' : '<p>No general info was found</p>'}
+              ${combinedResults.map(item => `<li><a href="${item.link}">${item.title.rendered}</a> ${item.type == 'post' ? `by ${item.authorName}` : ''}`).join('')}
+          ${combinedResults.length ? '</ul>' : ''}
+        `;
+      })
+      .catch(() => {
+          this.resultsDiv.innerHTML = '<p>Unexpected error, please try again</p>'
+      })*/
 
     /*await fetch(uniData.root_url + '/wp-json/wp/v2/posts?search=' + this.searchField.value)
       .then((response) => response.json())
@@ -188,7 +487,8 @@ class Search {
       this.closeOverlay();
     }
   }
-  openOverlay() {
+  openOverlay(e) {
+    e.preventDefault();
     this.searchOverlay.classList.add('search-overlay--active');
     //document.getElementsByTagName('body')[0].classList.add('body-no-scroll')
     document.body.classList.add('body-no-scroll');
@@ -202,7 +502,7 @@ class Search {
     this.isOverlayOpen = false;
   }
   addSearchHTML() {
-    document.querySelector('body').innerHTML += `
+    document.body.innerHTML += `
             <div class="search-overlay">
                 <div class="search-overlay__top">
                     <div class="container">

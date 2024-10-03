@@ -41,10 +41,9 @@ get_header();
 					],
 				],
 			] );
-
 			while ( $homepageEvents->have_posts() ) {
 				$homepageEvents->the_post();
-				get_template_part( 'tempate-parts/content', 'event' );
+				get_template_part( 'template-parts/content', 'event' );
 			}
 			?>
             <p class="t-center no-margin"><a href="<?php

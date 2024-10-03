@@ -6,9 +6,13 @@
   background-color: #eee;
   padding: 8px 16px;
   display: inline-block;
-  margin-right: 7px;
+  margin-right: 10px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.fa {
+  margin-right: 4px;
 }
 
 .submit-note {
@@ -37,6 +41,10 @@
 
 .delete-note {
   color: red;
+}
+
+.hidden {
+  display: none;
 }
 
 .update-note {
